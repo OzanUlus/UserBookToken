@@ -47,9 +47,10 @@ namespace UserBookToken.Controllers
             
             }
 
-
+            _appDbContext.SaveChanges();
 
             return Ok(result);
+         
         }
         [HttpPost("Login")]
         public async Task<IActionResult> Login(LoginDto dto)

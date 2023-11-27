@@ -19,5 +19,10 @@ namespace UserBookToken.Context
             builder.Entity<UserFavBook>().HasKey(x => new { x.AppUserId, x.BookID });
             base.OnModelCreating(builder);
         }
+
+        internal Task FindAsync(string ıd)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

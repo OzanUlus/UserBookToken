@@ -70,6 +70,7 @@ namespace UserBookToken.Controllers
         public IActionResult AddBook(Book book) 
         {
           _context.Books.Add(book);
+            _context.SaveChanges();
             return Ok();
         
         }
@@ -79,6 +80,7 @@ namespace UserBookToken.Controllers
         {
           var item = _context.Books.Find(book.Id);
             _context.Books.Remove(item);
+            _context.SaveChanges();
             return Ok();
         
         }
