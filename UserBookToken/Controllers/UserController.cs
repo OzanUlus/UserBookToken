@@ -10,6 +10,9 @@ using UserBookToken.Token;
 
 namespace UserBookToken.Controllers
 {
+
+    [Route("api/[controller]")]
+    [ApiController]
     public class UserController : Controller
     {
         private readonly SignInManager<AppUser> _signInManager;
