@@ -20,6 +20,8 @@ namespace UserBookToken.Controllers
         private readonly AppDbContext _appDbContext;
         private readonly IMapper _mapper;
 
+        public object? GenerateToken { get; private set; }
+
         public UserController(SignInManager<AppUser> signInManager, UserManager<AppUser> userManager, AppDbContext appDbContext, IMapper mapper)
         {
             _signInManager = signInManager;
@@ -47,7 +49,7 @@ namespace UserBookToken.Controllers
             
             }
 
-            _appDbContext.SaveChanges();
+           
 
             return Ok(result);
          
@@ -55,8 +57,6 @@ namespace UserBookToken.Controllers
         [HttpPost("Login")]
         public async Task<IActionResult> Login(LoginDto dto)
         {
-            TokenGenerator token = new TokenGenerator();
-            var result2 = "";
             var user = await _userManager.FindByEmailAsync(dto.Email);
 
             if (user == null) 
@@ -67,28 +67,13 @@ namespace UserBookToken.Controllers
 
             var result = await _signInManager.PasswordSignInAsync(user, dto.Password,false,false);
 
-            if (result.Succeeded)
+            if (!result.Succeeded)
             {
-               var roleList = await _userManager.GetRolesAsync(user);
-                var roleClaims = roleList.Select(x=>new Claim(ClaimTypes.Role,x)).ToList();
-
-                var claimList = await _userManager.GetClaimsAsync(user);
-                var listUserİnfo = new List<Claim>() 
-                {
-                 new Claim(ClaimTypes.Name,user.Name),
-                 new Claim(ClaimTypes.Surname,user.SurName),
-                 new Claim(ClaimTypes.DateOfBirth,user.BirthDate.ToString())
-  
-                };
-
-                roleClaims.AddRange(claimList);
-                roleClaims.AddRange(listUserİnfo);
-                result2 = token.GenerateToken(roleClaims);
+                return BadRequest("Mail veya şifre hatası");
  
             }
-            else return BadRequest("Kullanıcı adı veya şifre yanlış");
-
-            return Ok(result2);
+            return Ok(GenerateToken);
+            
             
         }
     }

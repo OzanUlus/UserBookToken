@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using UserBookToken.Context;
 using UserBookToken.DTO;
 using UserBookToken.Entities;
@@ -49,40 +50,33 @@ namespace UserBookToken.Controllers
             return BadRequest("Kullanıcı bulunamadı");
 
         }
-        [Authorize(Roles = "user")]
-        [HttpGet("AddBookToFavList")]
-        public IActionResult AddBookToFavList(string userId,string bookId) 
-        {
-            try
-            {
-                var user = _appDbContext.Users.Find(userId);
-                if (user== null) 
-                {
-                    return NotFound("Kullanıcı bulunamadı");                
-                }
-                var book = _appDbContext.Books.Find(bookId);
-                if (book != null) 
-                {
-                    user.UserFavBooks.Add(book);
-                    _appDbContext.SaveChanges();
-                }
-                return NotFound("Kitap bulunamadı");
-
-
-
-
-
-
-            }
-            catch (Exception ex)
-            {
-
-                return BadRequest(ex.Message);
-            }
-            
-            
-           
         
+        [HttpGet("AddBookToFavList/{id}")]
+        public async Task<IActionResult> AddBookToFavList(string id) 
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var exists = await _appDbContext.Books.AnyAsync(x => x.Id == id) && await _appDbContext.Users.AnyAsync(x => x.Id == userId);
+
+            if (exists)
+            {
+                var userFavBook = new UserFavBook
+                {
+                    AppUserId = userId,
+                     BookID= id
+                };
+
+                _appDbContext.userFavBooks .Add(userFavBook);
+                await _appDbContext.SaveChangesAsync();
+
+                return Ok();
+            }
+
+            return NotFound();
+
+
+
+
         }
 
     }

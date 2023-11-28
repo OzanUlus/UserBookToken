@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using UserBookToken.Context;
 using UserBookToken.Entities;
 using UserBookToken.Filter;
@@ -7,7 +9,7 @@ using UserBookToken.Paging;
 
 namespace UserBookToken.Controllers
 {
-
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class BookController : Controller
@@ -65,16 +67,25 @@ namespace UserBookToken.Controllers
           
 
         }
-        [Authorize(Roles ="admin")]
-        [HttpPost("AddBook")]
-        public IActionResult AddBook(Book book) 
-        {
-          _context.Books.Add(book);
-            _context.SaveChanges();
-            return Ok();
         
+        [HttpPost("AddBook")]
+        [Authorize(Roles = "Admin")]
+        public IActionResult AddBook(BookDto bookDto) 
+        {
+            Book book = new Book()
+            {
+                Name = bookDto.BookName,
+                Category = bookDto.CategoryName,
+                AuthourName = bookDto.AuthorName,
+                PageCount = bookDto.Page,
+                Color = bookDto.Color
+            };
+             _context.Books.AddAsync(book);
+             _context.SaveChangesAsync();
+            return StatusCode(StatusCodes.Status201Created);
+
         }
-        [Authorize(Roles = "admin")]
+        
         [HttpDelete("DeleteBook")]
         public IActionResult DeleteBook(Book book) 
         {
@@ -85,11 +96,25 @@ namespace UserBookToken.Controllers
         
         }
         [HttpGet("ListUserFavBook")]
-        public IActionResult ListUserFavBook(string userId,string bookId)
+        public async Task<IActionResult> ListUserFavBook()
         {
-         var result = _context.userFavBooks.Where(x=>x.AppUserId==userId && x.BookID==bookId).ToList();
-            return Ok(result);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var books = await _context.userFavBooks
+                .Include(x=>x.Book).Where(x=>x.AppUserId == userId)
+                .Select(x=>x.Book)
+                .ToListAsync();
+            return Ok(books);
+         
+            
         
         }
+        public class BookDto
+    {
+        public string BookName { get; set; }
+        public string CategoryName { get; set; }
+        public string AuthorName { get; set; }
+        public int Page { get; set; }
+        public string Color { get; set; }
+    }
     }
 }
